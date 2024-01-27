@@ -17,7 +17,7 @@ public class TestCreditRatingDemoApplication {
     }
 
     public static void main(String[] args) {
-        SpringApplication.from(CreditRatingDemoApplication::main).with(TestCreditRatingDemoApplication.class).run(args);
+        SpringApplication.from(CreditRatingRequestProcessingApplication::main).with(TestCreditRatingDemoApplication.class).run(args);
     }
 
 }

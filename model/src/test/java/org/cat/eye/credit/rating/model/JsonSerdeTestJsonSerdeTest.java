@@ -7,16 +7,13 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class JsonSerdeTest {
-
-    @Test
-    void deserialize() {
-    }
+public class JsonSerdeTestJsonSerdeTest {
 
     @Test
-    void serialize() {
+    void serializeDeserializeTest() {
 
         Contact contact = new Contact("full", "+7 777 777 77 77", null);
         Participant participant = new Participant("Петров", "Петр", "Петрович", contact);

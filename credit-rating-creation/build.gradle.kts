@@ -1,5 +1,5 @@
 plugins {
-    java
+    id("org.eye.cat.tmp.java-application-conventions")
     id("org.springframework.boot") version "3.2.1"
     id("io.spring.dependency-management") version "1.1.4"
 }
@@ -44,4 +44,8 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+application {
+    mainClass.set("org.cat.eye.credit.rating.CreditRatingRequestProcessingApplication")
 }
