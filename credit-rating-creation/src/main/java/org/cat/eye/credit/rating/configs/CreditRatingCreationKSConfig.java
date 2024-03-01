@@ -9,10 +9,10 @@ import org.cat.eye.credit.rating.model.omni.request.CreditProfileCreateRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.annotation.EnableKafkaStreams;
 import org.springframework.kafka.annotation.KafkaStreamsDefaultConfiguration;
 import org.springframework.kafka.config.KafkaStreamsConfiguration;
+import org.springframework.kafka.config.StreamsBuilderFactoryBeanConfigurer;
 import org.springframework.kafka.support.serializer.JsonSerde;
 
 import java.util.HashMap;
@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.UUID;
 
 @Configuration
-@EnableKafka
 @EnableKafkaStreams
 public class CreditRatingCreationKSConfig {
 
@@ -40,16 +39,16 @@ public class CreditRatingCreationKSConfig {
         return new KafkaStreamsConfiguration(props);
     }
 
-//    @Bean
-//    public StreamsBuilderFactoryBeanConfigurer configurer() {
-//        return fb -> fb.setStateListener(
-//                ((newState, oldState) -> System.out.println("State transition from " + oldState + " to " + newState))
-//        );
-//    }
+    @Bean
+    public StreamsBuilderFactoryBeanConfigurer configurer() {
+        return fb -> fb.setStateListener(
+                ((newState, oldState) -> System.out.println("State transition from " + oldState + " to " + newState))
+        );
+    }
 
     @Bean
-    public KStream<UUID, CreditProfileCreateRequest> kStream(StreamsBuilder streamsBuilder) {
-        KStream<UUID, CreditProfileCreateRequest> stream = streamsBuilder.stream("credit-rating-request");
+    public KStream<UUID, CreditProfileCreateRequest> kStream(StreamsBuilder myKStreamBuilder) {
+        KStream<UUID, CreditProfileCreateRequest> stream = myKStreamBuilder.stream("credit-rating-request");
         stream.foreach((key, value) ->
                 System.out.println("Принят запрос с ID [" + key + "] от клиента " + value.participant().surname())
         );
