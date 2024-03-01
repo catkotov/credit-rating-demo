@@ -23,7 +23,7 @@ import java.util.UUID;
 @EnableKafkaStreams
 public class CreditRatingCreationKSConfig {
 
-    @Value("${kafka.bootstrap.servers}")
+    @Value("${spring.kafka.bootstrap-servers}")
     String kafkaBootstrapServers;
 
     @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
