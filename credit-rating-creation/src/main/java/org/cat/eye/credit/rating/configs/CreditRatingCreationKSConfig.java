@@ -6,6 +6,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.cat.eye.credit.rating.model.omni.request.CreditProfileCreateRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -23,12 +24,15 @@ import java.util.UUID;
 @EnableKafkaStreams
 public class CreditRatingCreationKSConfig {
 
+    @Value("${kafka.bootstrap.servers}")
+    String kafkaBootstrapServers;
+
     @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
     public KafkaStreamsConfiguration creditRatingCreationKSConfigs() {
         Map<String, Object> props = new HashMap<>();
 
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "dev1");
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrapServers);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.UUIDSerde.class);
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, new JsonSerde<>(CreditProfileCreateRequest.class).getClass());

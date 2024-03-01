@@ -28,15 +28,21 @@ public class TestCreditRatingRequestProcessingApplication {
     private static final String DOCKER_IMAGE_NAME = "confluentinc/cp-kafka:latest";
 //    private static final String DOCKER_IMAGE_NAME = "bitnami/kafka:3.4.1";
 
-    @ClassRule
-    public static KafkaContainer kafka = new KafkaContainer(DockerImageName.parse(DOCKER_IMAGE_NAME));
-
     @Bean
-    public KafkaStreamsConfiguration consumerConfigs() {
+    KafkaContainer kafkaContainer() {
+        return new KafkaContainer(DockerImageName.parse(DOCKER_IMAGE_NAME));
+    }
+//    public static KafkaContainer kafka = new KafkaContainer(DockerImageName.parse(DOCKER_IMAGE_NAME));
+
+
+    @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
+    public KafkaStreamsConfiguration creditRatingCreationKSConfigs(KafkaContainer kafkaContainer) {
         Map<String, Object> props = new HashMap<>();
 
+        System.out.println("++++++++++++ " + kafkaContainer.getBootstrapServers());
+
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "dev1");
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.UUIDSerde.class);
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, new JsonSerde<>(CreditProfileCreateRequest.class).getClass());
@@ -44,12 +50,12 @@ public class TestCreditRatingRequestProcessingApplication {
         return new KafkaStreamsConfiguration(props);
     }
 
-    @Bean
-    public NewTopic creditRatingRequest() {
-        return TopicBuilder.name("credit-rating-request")
-                .partitions(7)
-                .build();
-    }
+//    @Bean
+//    public NewTopic creditRatingRequest() {
+//        return TopicBuilder.name("credit-rating-request")
+//                .partitions(7)
+//                .build();
+//    }
 
     public static void main(String[] args) {
         SpringApplication.from(CreditRatingRequestProcessingApplication::main).with(TestCreditRatingRequestProcessingApplication.class).run(args);
