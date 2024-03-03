@@ -1,11 +1,11 @@
 package org.cat.eye.credit.rating;
 
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.serialization.UUIDDeserializer;
 import org.apache.kafka.common.serialization.UUIDSerializer;
-import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.TestInputTopic;
-import org.apache.kafka.streams.TopologyTestDriver;
+import org.apache.kafka.streams.*;
 import org.cat.eye.credit.rating.model.JsonSerde;
+import org.cat.eye.credit.rating.model.application.request.ReserveApplicationNumberRequest;
 import org.cat.eye.credit.rating.model.omni.request.Contact;
 import org.cat.eye.credit.rating.model.omni.request.CreditProfileCreateRequest;
 import org.cat.eye.credit.rating.model.omni.request.Participant;
@@ -31,6 +31,8 @@ class CreditRatingRequestProcessingApplicationTest {
     private TopologyTestDriver testDriver;
     private TestInputTopic<UUID, CreditProfileCreateRequest> inputTopic;
 
+    private TestOutputTopic<UUID, ReserveApplicationNumberRequest> outputTopic;
+
     @BeforeEach
     void init() {
 
@@ -42,6 +44,10 @@ class CreditRatingRequestProcessingApplicationTest {
                 new UUIDSerializer(),
                 new JsonSerde<CreditProfileCreateRequest>()
         );
+        outputTopic = testDriver.createOutputTopic("app-number-request",
+                new UUIDDeserializer(),
+                new JsonSerde<ReserveApplicationNumberRequest>()
+        );
     }
 
     @Test
@@ -52,6 +58,10 @@ class CreditRatingRequestProcessingApplicationTest {
         CreditProfileCreateRequest request = new CreditProfileCreateRequest(UUID.randomUUID().toString(), participant);
 
         inputTopic.pipeInput(UUID.fromString(request.appSequence()), request);
+
+        KeyValue<UUID, ReserveApplicationNumberRequest> appNumberRequest = outputTopic.readKeyValue();
+
+        System.out.println("Принят запрос на выделения номера заявления от " + appNumberRequest.key);
 
     }
 

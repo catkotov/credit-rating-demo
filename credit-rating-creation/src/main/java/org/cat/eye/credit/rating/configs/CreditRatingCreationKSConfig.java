@@ -4,6 +4,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.kstream.BranchedKStream;
 import org.apache.kafka.streams.kstream.KStream;
 import org.cat.eye.credit.rating.model.JsonSerde;
 import org.cat.eye.credit.rating.model.omni.request.CreditProfileCreateRequest;
@@ -41,6 +42,9 @@ public class CreditRatingCreationKSConfig {
     @Bean
     public KStream<UUID, CreditProfileCreateRequest> kStream(StreamsBuilder myKStreamBuilder) {
         KStream<UUID, CreditProfileCreateRequest> stream = myKStreamBuilder.stream("credit-rating-request");
+
+        stream.to("app-number-request");
+
         stream.foreach((key, value) ->
                 System.out.println("Принят запрос с ID [" + key + "] от клиента " + value.participant().surname())
         );

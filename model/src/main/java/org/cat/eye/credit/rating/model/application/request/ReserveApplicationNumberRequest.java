@@ -1,4 +1,6 @@
 package org.cat.eye.credit.rating.model.application.request;
 
-public record ReserveApplicationNumberRequest() {
+import org.cat.eye.credit.rating.model.JSONSerdeCompatible;
+
+public record ReserveApplicationNumberRequest() implements JSONSerdeCompatible {
 }
