@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.config.StreamsBuilderFactoryBean;
+import org.springframework.kafka.test.context.EmbeddedKafka;
 
 import java.util.Properties;
 import java.util.UUID;
@@ -26,9 +27,10 @@ import java.util.concurrent.ExecutionException;
         properties = {"spring.main.allow-bean-definition-overriding=true"},
         classes = {CreditRatingRequestProcessingApplicationTestConfiguration.class}
 )
-//@EmbeddedKafka(
-//        topics = {"credit-rating-request", "app-number-request", "app-number-response", "credit-rating-response"},
-//        kraft = false)
+@EmbeddedKafka(
+        topics = {"credit-rating-request", "app-number-request", "app-number-response", "credit-rating-response"},
+        kraft = false
+)
 class CreditRatingRequestProcessingApplicationTest {
 
     @Autowired
