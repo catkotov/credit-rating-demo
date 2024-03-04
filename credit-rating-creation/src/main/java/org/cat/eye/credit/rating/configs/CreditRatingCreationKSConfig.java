@@ -2,11 +2,16 @@ package org.cat.eye.credit.rating.configs;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.kstream.GlobalKTable;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.state.KeyValueStore;
 import org.cat.eye.credit.rating.model.JsonSerde;
 import org.cat.eye.credit.rating.model.application.response.ReserveApplicationNumberResponse;
+import org.cat.eye.credit.rating.model.dictionary.IrsRateByCustomerSegmentCode;
 import org.cat.eye.credit.rating.model.omni.request.CreditProfileCreateRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -47,6 +52,17 @@ public class CreditRatingCreationKSConfig {
     @Bean
     public KStream<UUID, ReserveApplicationNumberResponse> appNumberStream(StreamsBuilder myKStreamBuilder) {
         return myKStreamBuilder.stream("app-number-response");
+    }
+
+    @Bean
+    public GlobalKTable<Integer, IrsRateByCustomerSegmentCode> segmentCodeDictionary(StreamsBuilder myKStreamBuilder) {
+        return myKStreamBuilder.globalTable(
+                "segment-code-table",
+                Materialized.
+                        <Integer, IrsRateByCustomerSegmentCode, KeyValueStore<Bytes, byte[]>>as("segment-code-table-store")
+                        .withKeySerde(Serdes.Integer())
+                        .withValueSerde(new JsonSerde<>())
+        );
     }
 
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.cat.eye.credit.rating.model.application.request.ReserveApplicationNumberRequest;
 import org.cat.eye.credit.rating.model.application.response.ReserveApplicationNumberResponse;
+import org.cat.eye.credit.rating.model.dictionary.IrsRateByCustomerSegmentCode;
 import org.cat.eye.credit.rating.model.omni.request.CreditProfileCreateRequest;
 import org.cat.eye.credit.rating.model.omni.response.CreditProfileCreateResponse;
 
@@ -12,7 +13,8 @@ import org.cat.eye.credit.rating.model.omni.response.CreditProfileCreateResponse
         @JsonSubTypes.Type(value = CreditProfileCreateRequest.class, name = "rcpc"),
         @JsonSubTypes.Type(value = ReserveApplicationNumberRequest.class, name = "ran"),
         @JsonSubTypes.Type(value = ReserveApplicationNumberResponse.class, name = "anr"),
-        @JsonSubTypes.Type(value = CreditProfileCreateResponse.class, name = "cpcr")
+        @JsonSubTypes.Type(value = CreditProfileCreateResponse.class, name = "cpcr"),
+        @JsonSubTypes.Type(value = IrsRateByCustomerSegmentCode.class, name = "irbcsc")
 })
 public interface JSONSerdeCompatible {
 }

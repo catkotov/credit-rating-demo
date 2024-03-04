@@ -3,12 +3,10 @@ package org.cat.eye.credit.rating.create;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.kstream.JoinWindows;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.StreamJoined;
-import org.apache.kafka.streams.kstream.ValueJoiner;
+import org.apache.kafka.streams.kstream.*;
 import org.cat.eye.credit.rating.model.JsonSerde;
 import org.cat.eye.credit.rating.model.application.response.ReserveApplicationNumberResponse;
+import org.cat.eye.credit.rating.model.dictionary.IrsRateByCustomerSegmentCode;
 import org.cat.eye.credit.rating.model.omni.request.CreditProfileCreateRequest;
 import org.cat.eye.credit.rating.model.omni.response.CreditProfileCreateResponse;
 import org.cat.eye.credit.rating.model.omni.response.CreditProfileData;
@@ -28,6 +26,8 @@ public class CreditRatingCreation {
 
     private final KStream<UUID, ReserveApplicationNumberResponse> appNumberStream;
 
+    private final GlobalKTable<Integer, IrsRateByCustomerSegmentCode> segmentCodeDictionary;
+
     @PostConstruct
     public void init() {
 
@@ -44,13 +44,29 @@ public class CreditRatingCreation {
                 StreamJoined.with(new Serdes.UUIDSerde(), new JsonSerde<>(), new JsonSerde<>())
         );
 
-        resultStream.to("credit-rating-response");
+        KStream<UUID, CreditProfileCreateResponse> streamWithSegmentCode = resultStream.leftJoin(
+                segmentCodeDictionary,
+                joinMapper,
+                tableValueJoiner
+        );
+
+        streamWithSegmentCode.to("credit-rating-response");
     }
 
     private final ValueJoiner<CreditProfileCreateRequest, ReserveApplicationNumberResponse, CreditProfileCreateResponse>
             valueJoiner = (left, right) -> {
                 State state = new State("code", left.participant().name(), true,null);
-                CreditProfileData profileData = new CreditProfileData(right.reservedAppNumber(), "rawID", state);
+                CreditProfileData profileData = new CreditProfileData(right.reservedAppNumber(), 1, null,"rawID", state);
+                return new CreditProfileCreateResponse(Status.SUCCESS, new Date().getTime(), profileData);
+            };
+
+    private final KeyValueMapper<UUID, CreditProfileCreateResponse, Integer> joinMapper = (k, v) -> v.data().segmentCodeId();
+
+    private final ValueJoiner<CreditProfileCreateResponse, IrsRateByCustomerSegmentCode, CreditProfileCreateResponse>
+            tableValueJoiner = (left, right) -> {
+
+                State state = new State("code", left.data().state().name(), true,null);
+                CreditProfileData profileData = new CreditProfileData(left.data().appNumber(), 1, right != null ? right.rate() : null,"rawID", state);
                 return new CreditProfileCreateResponse(Status.SUCCESS, new Date().getTime(), profileData);
             };
 

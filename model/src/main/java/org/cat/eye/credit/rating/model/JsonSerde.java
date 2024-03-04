@@ -13,6 +13,7 @@ public class JsonSerde<T extends JSONSerdeCompatible> implements Serializer<T>, 
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+
     @SuppressWarnings("unchecked")
     @Override
     public T deserialize(String topic, byte[] data) {

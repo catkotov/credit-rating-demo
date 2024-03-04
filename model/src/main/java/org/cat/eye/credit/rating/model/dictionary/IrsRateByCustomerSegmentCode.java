@@ -1,5 +1,7 @@
 package org.cat.eye.credit.rating.model.dictionary;
 
+import org.cat.eye.credit.rating.model.JSONSerdeCompatible;
+
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -10,5 +12,5 @@ public record IrsRateByCustomerSegmentCode(
         Double rate,
         LocalDate startDate,
         LocalDate endDate
-) {
+) implements JSONSerdeCompatible {
 }

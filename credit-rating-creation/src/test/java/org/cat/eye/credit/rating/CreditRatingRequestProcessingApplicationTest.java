@@ -1,5 +1,6 @@
 package org.cat.eye.credit.rating;
 
+import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.UUIDDeserializer;
 import org.apache.kafka.common.serialization.UUIDSerializer;
@@ -7,6 +8,7 @@ import org.apache.kafka.streams.*;
 import org.cat.eye.credit.rating.model.JsonSerde;
 import org.cat.eye.credit.rating.model.application.request.ReserveApplicationNumberRequest;
 import org.cat.eye.credit.rating.model.application.response.ReserveApplicationNumberResponse;
+import org.cat.eye.credit.rating.model.dictionary.IrsRateByCustomerSegmentCode;
 import org.cat.eye.credit.rating.model.omni.request.Contact;
 import org.cat.eye.credit.rating.model.omni.request.CreditProfileCreateRequest;
 import org.cat.eye.credit.rating.model.omni.request.Participant;
@@ -19,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.config.StreamsBuilderFactoryBean;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 
+import java.time.LocalDate;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -41,6 +44,7 @@ class CreditRatingRequestProcessingApplicationTest {
     private TestOutputTopic<UUID, ReserveApplicationNumberRequest> appNumberOutputTopic;
     private TestInputTopic<UUID, ReserveApplicationNumberResponse> appNumberInputTopic;
     private TestOutputTopic<UUID, CreditProfileCreateResponse> outputTopic;
+    private TestInputTopic<Integer, IrsRateByCustomerSegmentCode> segmentCodeTopic;
 
     @BeforeEach
     void init() {
@@ -52,6 +56,12 @@ class CreditRatingRequestProcessingApplicationTest {
         appNumberOutputTopic = testDriver.createOutputTopic("app-number-request", new UUIDDeserializer(), new JsonSerde<>());
         appNumberInputTopic = testDriver.createInputTopic("app-number-response", new UUIDSerializer(), new JsonSerde<>());
         outputTopic = testDriver.createOutputTopic("credit-rating-response", new UUIDDeserializer(), new JsonSerde<>());
+        segmentCodeTopic = testDriver.createInputTopic("segment-code-table", new IntegerSerializer(), new JsonSerde<>());
+
+        IrsRateByCustomerSegmentCode segmentCode_1 = new IrsRateByCustomerSegmentCode(2, UUID.randomUUID(), 22, 2.22, LocalDate.now().minusDays(1), LocalDate.now().plusDays(22));
+        IrsRateByCustomerSegmentCode segmentCode_2 = new IrsRateByCustomerSegmentCode(1, UUID.randomUUID(), 11, 1.11, LocalDate.now().minusDays(1), LocalDate.now().plusDays(11));
+
+        segmentCodeTopic.pipeInput(segmentCode_1.customerSegmentCode(), segmentCode_1);
     }
 
     @AfterEach
@@ -75,6 +85,7 @@ class CreditRatingRequestProcessingApplicationTest {
 
         KeyValue<UUID, CreditProfileCreateResponse> response = outputTopic.readKeyValue();
         System.out.println("Создан кредитный профиль: appNumber = [" + response.value.data().appNumber() + "]");
+        System.out.println("Rate: [" + response.value.data().rate() + "]");
 
     }
 
