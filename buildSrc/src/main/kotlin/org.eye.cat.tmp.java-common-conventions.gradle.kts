@@ -1,6 +1,7 @@
 plugins {
     // Apply the java Plugin to add support for Java.
     java
+    jacoco
 }
 
 repositories {
@@ -30,4 +31,25 @@ java {
 tasks.named<Test>("test") {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+}
+
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+tasks.jacocoTestReport {
+    reports {
+        xml.required = false
+        csv.required = false
+        html.required = true
+//        html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
+    }
+}
+
+tasks.test {
+    finalizedBy(tasks.jacocoTestReport) // report is always generated after tests run
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test) // tests are required to run before generating the report
 }
