@@ -49,29 +49,12 @@ public class CreditRatingCreationKSConfig {
 
     @Bean
     public KStream<UUID, CreditProfileCreateRequest> kStream(StreamsBuilder myKStreamBuilder) {
-        KStream<UUID, CreditProfileCreateRequest> stream = myKStreamBuilder.stream("credit-rating-request");
-        KStream<UUID, ReserveApplicationNumberResponse> appNumberStream = myKStreamBuilder.stream("app-number-response");
+         return myKStreamBuilder.stream("credit-rating-request");
+    }
 
-        stream.to("app-number-request");
-
-        stream.foreach((key, value) ->
-                System.out.println("Принят запрос с ID [" + key + "] от клиента " + value.participant().surname())
-        );
-
-        KStream<UUID, CreditProfileCreateResponse> resultStream = stream.join(
-                appNumberStream,
-                (left, right) -> {
-                    State state = new State("code", left.participant().name(), true,null);
-                    CreditProfileData profileData = new CreditProfileData(right.reservedAppNumber(), "rawID", state);
-                    return new CreditProfileCreateResponse(Status.SUCCESS, new Date().getTime(), profileData);
-                },
-                JoinWindows.ofTimeDifferenceWithNoGrace(Duration.ofMinutes(5)),
-                StreamJoined.with(new Serdes.UUIDSerde(), new JsonSerde<>(), new JsonSerde<>())
-        );
-
-        resultStream.to("credit-rating-response");
-
-        return stream;
+    @Bean
+    public KStream<UUID, ReserveApplicationNumberResponse> appNumberStream(StreamsBuilder myKStreamBuilder) {
+        return myKStreamBuilder.stream("app-number-response");
     }
 
 }
