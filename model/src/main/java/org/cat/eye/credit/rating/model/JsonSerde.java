@@ -1,6 +1,7 @@
 package org.cat.eye.credit.rating.model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
@@ -13,6 +14,9 @@ public class JsonSerde<T extends JSONSerdeCompatible> implements Serializer<T>, 
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    static {
+        OBJECT_MAPPER.registerModule(new JavaTimeModule());
+    }
 
     @SuppressWarnings("unchecked")
     @Override

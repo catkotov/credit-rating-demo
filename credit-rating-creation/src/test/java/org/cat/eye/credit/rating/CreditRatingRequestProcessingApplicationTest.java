@@ -62,6 +62,7 @@ class CreditRatingRequestProcessingApplicationTest {
         IrsRateByCustomerSegmentCode segmentCode_2 = new IrsRateByCustomerSegmentCode(1, UUID.randomUUID(), 11, 1.11, LocalDate.now().minusDays(1), LocalDate.now().plusDays(11));
 
         segmentCodeTopic.pipeInput(segmentCode_1.customerSegmentCode(), segmentCode_1);
+        segmentCodeTopic.pipeInput(segmentCode_2.customerSegmentCode(), segmentCode_2);
     }
 
     @AfterEach
