@@ -21,10 +21,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.config.StreamsBuilderFactoryBean;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(
         properties = {"spring.main.allow-bean-definition-overriding=true"},
@@ -71,7 +74,7 @@ class CreditRatingRequestProcessingApplicationTest {
     }
 
     @Test
-    void contextCreate() throws ExecutionException, InterruptedException {
+    void contextCreate() throws InterruptedException {
 
         Contact contact = new Contact("full", "+7 777 777 77 77", null);
         Participant participant = new Participant("Петров", "Петр", "Петрович", contact);
@@ -80,11 +83,32 @@ class CreditRatingRequestProcessingApplicationTest {
         inputTopic.pipeInput(UUID.fromString(request.appSequence()), request);
 
         KeyValue<UUID, ReserveApplicationNumberRequest> appNumberRequest = appNumberOutputTopic.readKeyValue();
+        assertNotNull(appNumberRequest.value);
         System.out.println("Принят запрос на выделения номера заявления от " + appNumberRequest.key);
         ReserveApplicationNumberResponse appNumberResponse = new ReserveApplicationNumberResponse(1234567890L);
         appNumberInputTopic.pipeInput(appNumberRequest.key, appNumberResponse);
 
         KeyValue<UUID, CreditProfileCreateResponse> response = outputTopic.readKeyValue();
+        System.out.println("Создан кредитный профиль: appNumber = [" + response.value.data().appNumber() + "]");
+        System.out.println("Rate: [" + response.value.data().rate() + "]");
+
+
+        Contact contact_2 = new Contact("full", "+7 999 999 99 99", null);
+        Participant participant_2 = new Participant("Сидоров", "Сидор", "Сидорович", contact_2);
+        CreditProfileCreateRequest request_2 = new CreditProfileCreateRequest(UUID.randomUUID().toString(), participant_2);
+
+        inputTopic.pipeInput(UUID.fromString(request_2.appSequence()), request_2);
+
+        appNumberRequest = appNumberOutputTopic.readKeyValue();
+        assertNotNull(appNumberRequest.value);
+        System.out.println("Принят запрос на выделения номера заявления от " + appNumberRequest.key);
+
+        Thread.sleep(Duration.ofSeconds(10));
+
+        appNumberResponse = new ReserveApplicationNumberResponse(9876543210L);
+        appNumberInputTopic.pipeInput(appNumberRequest.key, appNumberResponse);
+
+        response = outputTopic.readKeyValue();
         System.out.println("Создан кредитный профиль: appNumber = [" + response.value.data().appNumber() + "]");
         System.out.println("Rate: [" + response.value.data().rate() + "]");
 

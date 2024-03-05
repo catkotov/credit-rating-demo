@@ -5,9 +5,11 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.GlobalKTable;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.cat.eye.credit.rating.model.JsonSerde;
 import org.cat.eye.credit.rating.model.application.response.ReserveApplicationNumberResponse;
@@ -40,18 +42,21 @@ public class CreditRatingCreationKSConfig {
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.UUIDSerde.class);
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, new JsonSerde<>().getClass());
+        props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
 
         return new KafkaStreamsConfiguration(props);
     }
 
     @Bean
     public KStream<UUID, CreditProfileCreateRequest> kStream(StreamsBuilder myKStreamBuilder) {
-         return myKStreamBuilder.stream("credit-rating-request");
+        Consumed<UUID, CreditProfileCreateRequest> consumedOptions = Consumed.with(new WallclockTimestampExtractor());
+         return myKStreamBuilder.stream("credit-rating-request", consumedOptions);
     }
 
     @Bean
     public KStream<UUID, ReserveApplicationNumberResponse> appNumberStream(StreamsBuilder myKStreamBuilder) {
-        return myKStreamBuilder.stream("app-number-response");
+        Consumed<UUID, ReserveApplicationNumberResponse> consumedOptions = Consumed.with(new WallclockTimestampExtractor());
+        return myKStreamBuilder.stream("app-number-response", consumedOptions);
     }
 
     @Bean
