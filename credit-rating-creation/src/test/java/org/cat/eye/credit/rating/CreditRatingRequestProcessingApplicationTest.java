@@ -7,7 +7,6 @@ import org.apache.kafka.common.serialization.UUIDSerializer;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.Windowed;
 import org.apache.kafka.streams.state.KeyValueIterator;
-import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.WindowStore;
 import org.cat.eye.credit.rating.model.JsonSerde;
 import org.cat.eye.credit.rating.model.application.request.ReserveApplicationNumberRequest;
@@ -27,9 +26,9 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -55,6 +54,9 @@ class CreditRatingRequestProcessingApplicationTest {
 
     @BeforeEach
     void init() {
+        assertNotNull(defaultKafkaStreamsBuilder);
+        assertNotNull(defaultKafkaStreamsBuilder.getTopology());
+
         Properties props = new Properties();
         props.setProperty(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.UUIDSerde.class.getName());
         props.setProperty(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, new JsonSerde<CreditProfileCreateRequest>().getClass().getName());
@@ -75,12 +77,16 @@ class CreditRatingRequestProcessingApplicationTest {
     @AfterEach
     void shutDown() {
         testDriver.close();
-        defaultKafkaStreamsBuilder.getKafkaStreams().close();
-        defaultKafkaStreamsBuilder.getKafkaStreams().cleanUp();
+        if (defaultKafkaStreamsBuilder.getKafkaStreams() != null) {
+            defaultKafkaStreamsBuilder.getKafkaStreams().close();
+            defaultKafkaStreamsBuilder.getKafkaStreams().cleanUp();
+        }
     }
 
     @Test
     void contextCreate() throws InterruptedException {
+
+        System.out.println(Objects.requireNonNull(defaultKafkaStreamsBuilder.getTopology()).describe());
 
         Contact contact = new Contact("full", "+7 777 777 77 77", null);
         Participant participant = new Participant("Петров", "Петр", "Петрович", contact);
@@ -98,23 +104,7 @@ class CreditRatingRequestProcessingApplicationTest {
         System.out.println("Создан кредитный профиль: appNumber = [" + response.value.data().appNumber() + "]");
         System.out.println("Rate: [" + response.value.data().rate() + "]");
 
-        WindowStore<UUID, ReserveApplicationNumberResponse> windowStore =
-                testDriver.getWindowStore("KSTREAM-OUTEROTHER-0000000010-store");
-        try (KeyValueIterator<Windowed<UUID>, ReserveApplicationNumberResponse> itr = windowStore.all()) {
-            while (itr.hasNext()) {
-                ReserveApplicationNumberResponse tmp = itr.next().value;
-                System.out.println("Значения хранишилища данных KSTREAM-OUTEROTHER-0000000010-store: [" + tmp + "]");
-            }
-        }
-
-        WindowStore<UUID, CreditProfileCreateRequest> windowStore_2 =
-                testDriver.getWindowStore("KSTREAM-JOINTHIS-0000000009-store");
-        try (KeyValueIterator<Windowed<UUID>, CreditProfileCreateRequest> itr = windowStore_2.all()) {
-            while (itr.hasNext()) {
-                CreditProfileCreateRequest rqst = itr.next().value;
-                System.out.println("Значения хранишилища данных KSTREAM-JOINTHIS-0000000009-store: [" + rqst + "]");
-            }
-        }
+        printWindowStorageContent();
 
 
         Contact contact_2 = new Contact("full", "+7 999 999 99 99", null);
@@ -128,7 +118,7 @@ class CreditRatingRequestProcessingApplicationTest {
         System.out.println("Принят запрос на выделения номера заявления от " + appNumberRequest.key);
 
 
-        Thread.sleep(Duration.ofSeconds(15));
+        Thread.sleep(Duration.ofSeconds(9));
 
         appNumberResponse = new ReserveApplicationNumberResponse(9876543210L);
         appNumberInputTopic.pipeInput(appNumberRequest.key, appNumberResponse);
@@ -138,21 +128,9 @@ class CreditRatingRequestProcessingApplicationTest {
         System.out.println("Rate: [" + response.value.data().rate() + "]");
 
 
-        Thread.sleep(Duration.ofSeconds(15));
+        Thread.sleep(Duration.ofSeconds(9));
 
-        try (KeyValueIterator<Windowed<UUID>, ReserveApplicationNumberResponse> itr = windowStore.all()) {
-            while (itr.hasNext()) {
-                ReserveApplicationNumberResponse tmp = itr.next().value;
-                System.out.println("Значения хранишилища данных KSTREAM-OUTEROTHER-0000000010-store: [" + tmp + "]");
-            }
-        }
-
-        try (KeyValueIterator<Windowed<UUID>, CreditProfileCreateRequest> itr = windowStore_2.all()) {
-            while (itr.hasNext()) {
-                CreditProfileCreateRequest rqst = itr.next().value;
-                System.out.println("Значения хранишилища данных KSTREAM-JOINTHIS-0000000009-store: [" + rqst + "]");
-            }
-        }
+        printWindowStorageContent();
 
 
 
@@ -167,7 +145,7 @@ class CreditRatingRequestProcessingApplicationTest {
         System.out.println("Принят запрос на выделения номера заявления от " + appNumberRequest.key);
 
 
-//        Thread.sleep(Duration.ofSeconds(15));
+//        Thread.sleep(Duration.ofSeconds(9));
 
         appNumberResponse = new ReserveApplicationNumberResponse(1111111111L);
         appNumberInputTopic.pipeInput(appNumberRequest.key, appNumberResponse);
@@ -177,21 +155,29 @@ class CreditRatingRequestProcessingApplicationTest {
         System.out.println("Rate: [" + response.value.data().rate() + "]");
 
 
-        Thread.sleep(Duration.ofSeconds(15));
+        Thread.sleep(Duration.ofSeconds(9));
 
-        try (KeyValueIterator<Windowed<UUID>, ReserveApplicationNumberResponse> itr = windowStore.all()) {
-            while (itr.hasNext()) {
-                ReserveApplicationNumberResponse tmp = itr.next().value;
-                System.out.println("Значения хранишилища данных KSTREAM-OUTEROTHER-0000000010-store: [" + tmp + "]");
-            }
-        }
+        printWindowStorageContent();
+    }
 
-        try (KeyValueIterator<Windowed<UUID>, CreditProfileCreateRequest> itr = windowStore_2.all()) {
-            while (itr.hasNext()) {
-                CreditProfileCreateRequest rqst = itr.next().value;
-                System.out.println("Значения хранишилища данных KSTREAM-JOINTHIS-0000000009-store: [" + rqst + "]");
-            }
-        }
+    private void printWindowStorageContent() {
+
+        defaultKafkaStreamsBuilder.getTopology().describe().subtopologies().stream()
+                .flatMap(st -> st.nodes().stream())
+                .filter(n -> n instanceof TopologyDescription.Processor
+                        && (n.name().contains("OUTEROTHER") || n.name().contains("JOINTHIS")))
+                .map(p -> p.name())
+                .forEach(pName -> {
+                    String storeName = pName + "-store";
+                    WindowStore<UUID,?> ws = testDriver.getWindowStore(storeName);
+                    if (ws != null) {
+                        try (KeyValueIterator<Windowed<UUID>, ?> itr = ws.all()) {
+                            while (itr.hasNext()) {
+                                System.out.println("Значения хранишилища данных " + storeName + ": [" + itr.next().value + "]");
+                            }
+                        }
+                    }
+                } );
     }
 
 }

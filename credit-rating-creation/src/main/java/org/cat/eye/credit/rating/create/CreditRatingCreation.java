@@ -3,6 +3,7 @@ package org.cat.eye.credit.rating.create;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.*;
 import org.cat.eye.credit.rating.model.JsonSerde;
 import org.cat.eye.credit.rating.model.application.request.ReserveApplicationNumberRequest;
@@ -23,7 +24,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CreditRatingCreation {
 
-    private final KStream<UUID, CreditProfileCreateRequest> kStream;
+    private final KStream<UUID, CreditProfileCreateRequest> creditProfileCreateStream;
 
     private final KStream<UUID, ReserveApplicationNumberResponse> appNumberStream;
 
@@ -32,21 +33,27 @@ public class CreditRatingCreation {
     @PostConstruct
     public void init() {
 
-        SessionWindows.ofInactivityGapWithNoGrace(Duration.ofSeconds(5));
+         KStream<UUID, CreditProfileCreateRequest> creditProfileCreateStream_Phase_1 = creditProfileCreateStream
+                .peek((key, value) ->
+                        System.out.println("Принят запрос с ID [" + key + "] от клиента " + value.participant().surname()))
+                .map((key, value) -> {
+                    System.out.println("Трансформация запроса c ID [" + key + "] от клиента " + value.participant().surname());
+                    return new KeyValue<>(key, value);
+                });
 
-        kStream
+        creditProfileCreateStream_Phase_1
                 .mapValues(v -> new ReserveApplicationNumberRequest())
                 .to("app-number-request");
 
-        kStream
-                .peek((key, value) ->
-                        System.out.println("Принят запрос с ID [" + key + "] от клиента " + value.participant().surname()))
+        creditProfileCreateStream_Phase_1
                 .leftJoin(
                         appNumberStream,
                         valueJoiner,
-                        JoinWindows.ofTimeDifferenceWithNoGrace(Duration.ofSeconds(5)),
+                        JoinWindows.ofTimeDifferenceWithNoGrace(Duration.ofSeconds(3)),
                         StreamJoined.with(new Serdes.UUIDSerde(), new JsonSerde<>(), new JsonSerde<>())
                 )
+                .peek((key, value) ->
+                        System.out.println("Обработка запроса с ID [" + key + "] от клиента " + value.data().state().name()))
                 .leftJoin(
                         segmentCodeDictionary,
                         joinMapper,
