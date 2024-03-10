@@ -20,9 +20,9 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.30")
     annotationProcessor("org.projectlombok:lombok:1.18.30")
 
-    implementation("com.fasterxml.jackson.core:jackson-core:2.16.1")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
-    implementation("com.fasterxml.jackson.core:jackson-annotations:2.16.1")
+//    implementation("com.fasterxml.jackson.core:jackson-core:2.16.1")
+//    implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
+//    implementation("com.fasterxml.jackson.core:jackson-annotations:2.16.1")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")

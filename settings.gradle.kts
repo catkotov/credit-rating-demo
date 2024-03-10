@@ -7,3 +7,4 @@ rootProject.name = "credit-rating-demo"
 
 include("model")
 include("credit-rating-creation")
+include("credit-rating-dictionary")
